@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kochbuch</title>
+<meta name="theme-color" content="#211F1C" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="icon-192.png" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #211F1C;
+    --surface: #2B2823;
+    --border: #47423A;
+    --text: #F2EDE4;
+    --muted: #A79C8C;
+    --herb: #8CA86E;
+    --paprika: #D2601A;
+    --divider: #3A362F;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: 'Public Sans', sans-serif; }
+  body { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+  .disp { font-family: 'Fraunces', serif; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  ::selection { background: var(--paprika); color: var(--bg); }
+  button { font-family: inherit; }
+  button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+    outline: 2px solid var(--herb); outline-offset: 2px;
+  }
+  a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .wrap { max-width: 640px; margin: 0 auto; padding: 28px 18px 90px; }
+  .row { display: flex; align-items: center; }
+  .top-title { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .top-title h1 { font-size: 30px; font-weight: 700; margin: 0; }
+  .subtitle { color: var(--muted); margin: 4px 0 20px; font-size: 14px; }
+
+  .search-wrap { position: relative; margin-bottom: 18px; }
+  .search-wrap svg { position: absolute; left: 14px; top: 13px; }
+  .search-wrap input {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px 12px 38px; color: var(--text); font-size: 15px;
+  }
+
+  .recipe-card {
+    text-align: left; width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; cursor: pointer; color: var(--text);
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+  }
+  .recipe-card .name { font-size: 19px; font-weight: 600; }
+  .recipe-meta { display: flex; gap: 14px; margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+  .recipe-meta span { display: flex; align-items: center; gap: 4px; }
+  .ing-count { color: var(--herb); font-size: 13px; white-space: nowrap; margin-left: 12px; }
+
+  .fab {
+    position: fixed; bottom: 24px; right: 20px; background: var(--paprika); color: var(--bg);
+    border: none; border-radius: 999px; width: 54px; height: 54px; display: flex;
+    align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(210,96,26,0.4); cursor: pointer;
+  }
+
+  .back-btn { background: none; border: none; color: var(--muted); font-size: 14px; display: flex;
+    align-items: center; gap: 6px; cursor: pointer; padding: 6px 4px; }
+  .back-btn.danger { color: var(--paprika); }
+
+  .dial-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .dial-label { font-size: 12px; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+  .dial-value { font-size: 34px; font-weight: 600; line-height: 1.1; }
+  .dial-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+    background: transparent; color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .dial-btn.accent { border: none; background: var(--paprika); color: var(--bg); }
+
+  h2.section { font-size: 19px; font-weight: 600; margin: 0 0 10px; }
+  .ing-line { display: flex; justify-content: space-between; align-items: baseline; padding: 9px 0; border-bottom: 1px solid var(--divider); }
+  .ing-amount { font-size: 14px; color: var(--herb); white-space: nowrap; margin-left: 12px; }
+
+  ol.steps { margin: 0; padding: 0; list-style: none; }
+  ol.steps li { display: flex; gap: 14px; margin-bottom: 16px; }
+  .step-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--divider);
+    color: var(--paprika); font-size: 13px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+  .step-text { font-size: 14.5px; line-height: 1.55; padding-top: 2px; }
+
+  label.field-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; color: var(--text); font-size: 14.5px; font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 44px; }
+  .form-row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .form-row > div { flex: 1; }
+  .ing-form-row, .step-form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .icon-btn { background: none; border: none; color: var(--muted); cursor: pointer; display: flex; align-items: center; }
+  .add-link { background: none; border: none; color: var(--herb); font-size: 14px; display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 4px; margin-bottom: 20px; }
+  .save-btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: 600; font-size: 15px; }
+  .save-btn.enabled { background: var(--paprika); color: var(--bg); cursor: pointer; }
+  .save-btn.disabled { background: var(--border); color: #8A8477; cursor: not-allowed; }
+  .empty { color: var(--muted); font-size: 14px; padding: 24px 0; text-align: center; }
+  .err-box { background: #3a2420; border: 1px solid var(--paprika); border-radius: 8px; padding: 10px; margin-bottom: 14px; font-size: 13px; color: #F2C9A8; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ---------- Icons (inline SVG, lucide-style) ---------- */
+const ICONS = {
+  chef: `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#D2601A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87A4 4 0 0 1 7.41 6a5.11 5.11 0 0 1 1.05-1.54 5 5 0 0 1 7.08 0A5.11 5.11 0 0 1 16.59 6 4 4 0 0 1 18 13.87V21H6Z"/><line x1="6" y1="17" x2="18" y2="17"/></svg>`,
+  search: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#A79C8C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  users: `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+  flame: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`,
+  plus: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  minus: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  x: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  trash: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`,
+  arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+};
+
+/* ---------- Seed data ---------- */
+const SEED_RECIPES = [
+  { id: "seed-1", name: "Kartoffelsalat", time: 40, baseServings: 4,
+    ingredients: [
+      { id: "i1", name: "festkochende Kartoffeln", amount: 1, unit: "kg" },
+      { id: "i2", name: "Gemüsebrühe", amount: 250, unit: "ml" },
+      { id: "i3", name: "Essig", amount: 3, unit: "EL" },
+      { id: "i4", name: "Senf", amount: 1, unit: "EL" },
+      { id: "i5", name: "Speiseöl", amount: 6, unit: "EL" },
+      { id: "i6", name: "Zwiebeln", amount: 2, unit: "Stück" },
+      { id: "i7", name: "Salz", amount: 1, unit: "TL" },
+      { id: "i8", name: "Pfeffer", amount: 0.5, unit: "TL" },
+    ],
+    steps: [
+      "Kartoffeln waschen und in der Schale ca. 20 Minuten kochen.",
+      "Kartoffeln pellen, noch warm in Scheiben schneiden.",
+      "Zwiebeln fein würfeln und mit heißer Brühe über die Kartoffeln geben.",
+      "Essig, Senf, Öl, Salz und Pfeffer einrühren und alles vermengen.",
+      "Mindestens 30 Minuten ziehen lassen, vor dem Servieren abschmecken.",
+    ] },
+  { id: "seed-2", name: "Rinder-Gulasch", time: 150, baseServings: 4,
+    ingredients: [
+      { id: "i1", name: "Rindfleisch, Gulaschstücke", amount: 800, unit: "g" },
+      { id: "i2", name: "Zwiebeln", amount: 3, unit: "Stück" },
+      { id: "i3", name: "Paprikaschoten", amount: 2, unit: "Stück" },
+      { id: "i4", name: "Tomatenmark", amount: 2, unit: "EL" },
+      { id: "i5", name: "Paprikapulver edelsüß", amount: 2, unit: "EL" },
+      { id: "i6", name: "Rinderbrühe", amount: 500, unit: "ml" },
+      { id: "i7", name: "Knoblauchzehen", amount: 2, unit: "Stück" },
+      { id: "i8", name: "Speiseöl", amount: 3, unit: "EL" },
+    ],
+    steps: [
+      "Fleisch portionsweise scharf anbraten und herausnehmen.",
+      "Zwiebeln im Bratfett glasig dünsten, Tomatenmark und Paprikapulver kurz mitrösten.",
+      "Fleisch zurückgeben, mit Brühe ablöschen.",
+      "Knoblauch und Paprikaschoten zugeben, zugedeckt ca. 2 Stunden schmoren.",
+      "Abschmecken und mit Brot oder Knödeln servieren.",
+    ] },
+  { id: "seed-3", name: "Pfannkuchen", time: 25, baseServings: 4,
+    ingredients: [
+      { id: "i1", name: "Mehl", amount: 250, unit: "g" },
+      { id: "i2", name: "Milch", amount: 500, unit: "ml" },
+      { id: "i3", name: "Eier", amount: 3, unit: "Stück" },
+      { id: "i4", name: "Salz", amount: 0.25, unit: "TL" },
+      { id: "i5", name: "Butter zum Braten", amount: 2, unit: "EL" },
+    ],
+    steps: [
+      "Mehl, Milch, Eier und Salz zu einem glatten Teig verrühren.",
+      "Teig 10 Minuten ruhen lassen.",
+      "Butter in einer Pfanne erhitzen, dünn Teig eingießen und von beiden Seiten goldbraun backen.",
+    ] },
+];
+
+/* ---------- Storage (localStorage) ---------- */
+const STORE_KEY = "kochbuch.recipes";
+function loadRecipes() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  localStorage.setItem(STORE_KEY, JSON.stringify(SEED_RECIPES));
+  return SEED_RECIPES;
+}
+function saveRecipes(list) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(list));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* ---------- Helpers ---------- */
+function formatAmount(n) {
+  if (!isFinite(n)) return "0";
+  const rounded = Math.round(n * 100) / 100;
+  if (Number.isInteger(rounded)) return String(rounded);
+  return rounded.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function esc(s) {
+  const d = document.createElement("div");
+  d.textContent = s ?? "";
+  return d.innerHTML;
+}
+
+/* ---------- State ---------- */
+let state = {
+  recipes: loadRecipes(),
+  view: "list", // list | detail | add
+  activeId: null,
+  servings: {},
+  query: "",
+  error: "",
+  form: null,
+};
+
+const app = document.getElementById("app");
+
+function render() {
+  if (state.view === "list") renderList();
+  else if (state.view === "detail") renderDetail();
+  else if (state.view === "add") renderAdd();
+}
+
+/* ---------- List View ---------- */
+function renderList() {
+  const q = state.query.toLowerCase();
+  const filtered = state.recipes.filter(r => r.name.toLowerCase().includes(q));
+  app.innerHTML = `
+    <div class="top-title">${ICONS.chef}<h1 class="disp">Kochbuch</h1></div>
+    <p class="subtitle">${filtered.length} ${filtered.length === 1 ? "Rezept" : "Rezepte"} · Portionen live berechnen</p>
+    <div class="search-wrap">
+      ${ICONS.search}
+      <input id="search-input" type="text" placeholder="Rezept suchen…" value="${esc(state.query)}" />
+    </div>
+    ${state.error ? `<div class="err-box">${esc(state.error)}</div>` : ""}
+    <div id="recipe-list"></div>
+    <button class="fab" id="fab-add" aria-label="Neues Rezept">${ICONS.plus}</button>
+  `;
+  const listEl = document.getElementById("recipe-list");
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div class="empty">Kein Rezept gefunden. Leg eins an.</div>`;
+  } else {
+    filtered.forEach(r => {
+      const card = document.createElement("button");
+      card.className = "recipe-card";
+      card.innerHTML = `
+        <div>
+          <div class="name disp">${esc(r.name)}</div>
+          <div class="recipe-meta">
+            <span>${ICONS.clock} ${r.time} Min.</span>
+            <span>${ICONS.users} ${r.baseServings} Portionen</span>
+          </div>
+        </div>
+        <span class="ing-count mono">${r.ingredients.length} Zutaten</span>
+      `;
+      card.addEventListener("click", () => { openRecipe(r.id); });
+      listEl.appendChild(card);
+    });
+  }
+  document.getElementById("search-input").addEventListener("input", (e) => {
+    state.query = e.target.value;
+    renderList();
+    document.getElementById("search-input").focus();
+    document.getElementById("search-input").selectionStart = document.getElementById("search-input").value.length;
+  });
+  document.getElementById("fab-add").addEventListener("click", () => {
+    state.view = "add";
+    state.form = { name: "", time: 30, baseServings: 4, ingredients: [{ id: uid(), name: "", amount: "", unit: "g" }], steps: [""] };
+    render();
+  });
+}
+
+function openRecipe(id) {
+  state.activeId = id;
+  state.view = "detail";
+  render();
+}
+
+/* ---------- Detail View ---------- */
+function renderDetail() {
+  const recipe = state.recipes.find(r => r.id === state.activeId);
+  if (!recipe) { state.view = "list"; render(); return; }
+  const servings = state.servings[recipe.id] ?? recipe.baseServings;
+  const factor = recipe.baseServings ? servings / recipe.baseServings : 1;
+
+  app.innerHTML = `
+    <div class="row" style="justify-content: space-between; margin-bottom: 18px;">
+      <button class="back-btn" id="btn-back">${ICONS.arrowLeft} Zurück</button>
+      <button class="back-btn danger" id="btn-delete">${ICONS.trash} Löschen</button>
+    </div>
+    <h1 class="disp" style="font-size:30px; font-weight:700; margin:0 0 6px;">${esc(recipe.name)}</h1>
+    <div class="row" style="gap:16px; color: var(--muted); font-size:13px; margin-bottom:22px;">
+      <span class="row" style="gap:4px;">${ICONS.clock} ${recipe.time} Minuten</span>
+      <span class="row" style="gap:4px;">${ICONS.flame} ${recipe.ingredients.length} Zutaten</span>
+    </div>
+
+    <div class="dial-box">
+      <div>
+        <div class="dial-label">Portionen</div>
+        <div class="dial-value mono" id="servings-value">${servings}</div>
+      </div>
+      <div class="row" style="gap:10px;">
+        <button class="dial-btn" id="btn-minus">${ICONS.minus}</button>
+        <button class="dial-btn accent" id="btn-plus">${ICONS.plus}</button>
+      </div>
+    </div>
+
+    <h2 class="section disp">Zutaten</h2>
+    <div id="ing-list" style="margin-bottom:26px;"></div>
+
+    <h2 class="section disp">Zubereitung</h2>
+    <ol class="steps" id="steps-list"></ol>
+  `;
+
+  function paintIngredients() {
+    const f = (state.servings[recipe.id] ?? recipe.baseServings) / recipe.baseServings;
+    const html = recipe.ingredients.map(ing => `
+      <div class="ing-line">
+        <span>${esc(ing.name)}</span>
+        <span class="ing-amount mono">${formatAmount(ing.amount * f)} ${esc(ing.unit)}</span>
+      </div>
+    `).join("");
+    document.getElementById("ing-list").innerHTML = html;
+  }
+  paintIngredients();
+
+  document.getElementById("steps-list").innerHTML = recipe.steps.map((s, i) => `
+    <li>
+      <span class="step-num mono">${i + 1}</span>
+      <span class="step-text">${esc(s)}</span>
+    </li>
+  `).join("");
+
+  document.getElementById("btn-back").addEventListener("click", () => { state.view = "list"; render(); });
+  document.getElementById("btn-delete").addEventListener("click", () => {
+    state.recipes = state.recipes.filter(r => r.id !== recipe.id);
+    const ok = saveRecipes(state.recipes);
+    state.error = ok ? "" : "Speichern fehlgeschlagen.";
+    state.view = "list";
+    render();
+  });
+  document.getElementById("btn-minus").addEventListener("click", () => {
+    const cur = state.servings[recipe.id] ?? recipe.baseServings;
+    state.servings[recipe.id] = Math.max(1, cur - 1);
+    document.getElementById("servings-value").textContent = state.servings[recipe.id];
+    paintIngredients();
+  });
+  document.getElementById("btn-plus").addEventListener("click", () => {
+    const cur = state.servings[recipe.id] ?? recipe.baseServings;
+    state.servings[recipe.id] = cur + 1;
+    document.getElementById("servings-value").textContent = state.servings[recipe.id];
+    paintIngredients();
+  });
+}
+
+/* ---------- Add View ---------- */
+function renderAdd() {
+  const f = state.form;
+
+  app.innerHTML = `
+    <div class="row" style="justify-content: space-between; margin-bottom: 18px;">
+      <button class="back-btn" id="btn-cancel">${ICONS.x} Abbrechen</button>
+    </div>
+    <h1 class="disp" style="font-size:26px; font-weight:700; margin:0 0 20px;">Neues Rezept</h1>
+
+    <label class="field-label">Name</label>
+    <input type="text" id="f-name" placeholder="z. B. Linsensuppe" value="${esc(f.name)}" style="margin-bottom:14px;" />
+
+    <div class="form-row">
+      <div>
+        <label class="field-label">Zeit (Min.)</label>
+        <input type="number" min="0" id="f-time" value="${f.time}" />
+      </div>
+      <div>
+        <label class="field-label">Grundportionen</label>
+        <input type="number" min="1" id="f-servings" value="${f.baseServings}" />
+      </div>
+    </div>
+
+    <label class="field-label">Zutaten</label>
+    <div id="ing-form-list"></div>
+    <button class="add-link" id="btn-add-ing">${ICONS.plus} Zutat hinzufügen</button>
+
+    <label class="field-label">Zubereitung</label>
+    <div id="step-form-list"></div>
+    <button class="add-link" id="btn-add-step">${ICONS.plus} Schritt hinzufügen</button>
+
+    <button class="save-btn" id="btn-save">Rezept speichern</button>
+  `;
+
+  const UNITS = ["g", "kg", "ml", "l", "EL", "TL", "Stück", "Prise"];
+
+  function paintIngForm() {
+    const el = document.getElementById("ing-form-list");
+    el.innerHTML = f.ingredients.map((ing) => `
+      <div class="ing-form-row" data-id="${ing.id}">
+        <input type="text" class="ing-name" placeholder="Zutat" value="${esc(ing.name)}" style="flex:3;" />
+        <input type="number" class="ing-amount" placeholder="Menge" value="${ing.amount}" style="flex:1;" />
+        <select class="ing-unit" style="flex:1;">
+          ${UNITS.map(u => `<option value="${u}" ${u === ing.unit ? "selected" : ""}>${u}</option>`).join("")}
+        </select>
+        <button class="icon-btn btn-remove-ing" type="button">${ICONS.x}</button>
+      </div>
+    `).join("");
+    el.querySelectorAll(".ing-form-row").forEach(row => {
+      const id = row.dataset.id;
+      row.querySelector(".ing-name").addEventListener("input", (e) => {
+        f.ingredients.find(i => i.id === id).name = e.target.value;
+        updateSaveState();
+      });
+      row.querySelector(".ing-amount").addEventListener("input", (e) => {
+        f.ingredients.find(i => i.id === id).amount = e.target.value;
+        updateSaveState();
+      });
+      row.querySelector(".ing-unit").addEventListener("change", (e) => {
+        f.ingredients.find(i => i.id === id).unit = e.target.value;
+      });
+      row.querySelector(".btn-remove-ing").addEventListener("click", () => {
+        f.ingredients = f.ingredients.filter(i => i.id !== id);
+        paintIngForm();
+        updateSaveState();
+      });
+    });
+  }
+
+  function paintStepForm() {
+    const el = document.getElementById("step-form-list");
+    el.innerHTML = f.steps.map((s, idx) => `
+      <div class="step-form-row" data-idx="${idx}">
+        <span class="mono" style="width:24px; padding-top:10px; color: var(--paprika); font-size:13px;">${idx + 1}</span>
+        <textarea class="step-text-input" placeholder="Schritt ${idx + 1}" style="flex:1;">${esc(s)}</textarea>
+        <button class="icon-btn btn-remove-step" type="button">${ICONS.x}</button>
+      </div>
+    `).join("");
+    el.querySelectorAll(".step-form-row").forEach(row => {
+      const idx = Number(row.dataset.idx);
+      row.querySelector(".step-text-input").addEventListener("input", (e) => {
+        f.steps[idx] = e.target.value;
+        updateSaveState();
+      });
+      row.querySelector(".btn-remove-step").addEventListener("click", () => {
+        f.steps.splice(idx, 1);
+        paintStepForm();
+        updateSaveState();
+      });
+    });
+  }
+
+  function canSave() {
+    return f.name.trim() &&
+      f.ingredients.some(i => i.name.trim() && i.amount !== "") &&
+      f.steps.some(s => s.trim());
+  }
+  function updateSaveState() {
+    const btn = document.getElementById("btn-save");
+    if (canSave()) { btn.className = "save-btn enabled"; btn.disabled = false; }
+    else { btn.className = "save-btn disabled"; btn.disabled = true; }
+  }
+
+  paintIngForm();
+  paintStepForm();
+  updateSaveState();
+
+  document.getElementById("f-name").addEventListener("input", (e) => { f.name = e.target.value; updateSaveState(); });
+  document.getElementById("f-time").addEventListener("input", (e) => { f.time = e.target.value; });
+  document.getElementById("f-servings").addEventListener("input", (e) => { f.baseServings = e.target.value; });
+
+  document.getElementById("btn-add-ing").addEventListener("click", () => {
+    f.ingredients.push({ id: uid(), name: "", amount: "", unit: "g" });
+    paintIngForm();
+    updateSaveState();
+  });
+  document.getElementById("btn-add-step").addEventListener("click", () => {
+    f.steps.push("");
+    paintStepForm();
+    updateSaveState();
+  });
+  document.getElementById("btn-cancel").addEventListener("click", () => {
+    state.view = "list"; state.form = null; render();
+  });
+  document.getElementById("btn-save").addEventListener("click", () => {
+    if (!canSave()) return;
+    const recipe = {
+      id: uid(),
+      name: f.name.trim(),
+      time: Number(f.time) || 0,
+      baseServings: Math.max(1, Number(f.baseServings) || 1),
+      ingredients: f.ingredients
+        .filter(i => i.name.trim() && i.amount !== "")
+        .map(i => ({ id: i.id, name: i.name.trim(), amount: Number(i.amount), unit: i.unit })),
+      steps: f.steps.filter(s => s.trim()).map(s => s.trim()),
+    };
+    state.recipes.push(recipe);
+    const ok = saveRecipes(state.recipes);
+    state.error = ok ? "" : "Speichern fehlgeschlagen.";
+    state.view = "list";
+    state.form = null;
+    render();
+  });
+}
+
+render();
+
+/* ---------- Service worker registration ---------- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("service-worker.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
